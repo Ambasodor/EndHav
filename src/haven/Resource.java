@@ -2235,8 +2235,10 @@ public class Resource implements Serializable {
 			Integer pver = found.get(nm);
 			if((pver != null) && (pver != ver)) {
 			    System.err.println("find-updates: warning: found conflicting versions of " + nm + ": " + ver + " and " + pver);
+			    System.out.println(nm + "" + ver + " found conf");
 			    found.put(nm, Math.min(ver, pver));
 			} else {
+			    System.out.println(nm + "" + ver + " conf not f");
 			    found.put(nm, ver);
 			}
 		    }

@@ -45,6 +45,7 @@ import haven.render.sl.Uniform;
 import haven.render.sl.Type;
 import haven.res.gfx.fx.msrad.MSRad;
 import haven.rx.Reactor;
+import haven.sprites.InfoAttr;
 
 public class MapView extends PView implements DTarget, Console.Directory {
     public static final Resource.Named inspectCursor = Resource.local().loadwait("gfx/hud/curs/studyx").indir();
@@ -113,7 +114,7 @@ public class MapView extends PView implements DTarget, Console.Directory {
 	public void resized() {
 	    float field = 0.5f;
 	    float aspect = ((float)sz.y) / ((float)sz.x);
-	    proj = Projection.frustum(-field, field, -aspect * field, aspect * field, 1, 2000);
+	    proj = Projection.frustum(-field, field, -aspect * field, aspect * field, 1, 10000);
 	}
 
 	public void apply(Pipe p) {
@@ -1249,6 +1250,11 @@ public class MapView extends PView implements DTarget, Console.Directory {
 	    if(glob.lightamb != null) {
 		amblight = new DirLight(glob.blightamb, glob.blightdif, glob.blightspc, Coord3f.o.sadd((float)glob.lightelev, (float)glob.lightang, 1f));
 		amblight.prio(100);
+		final Color lamb = new Color(200, 200, 200);
+		final Color ldif = new Color(200, 200, 200);
+		final Color lspc = new Color(200, 200, 200);
+		DirLight light = new DirLight(lamb, ldif, lspc, Coord3f.o.sadd((float) glob.lightelev, (float) glob.lightang, 1f));
+		amblight = light;
 	    } else {
 		amblight = null;
 	    }
@@ -2196,7 +2202,7 @@ public class MapView extends PView implements DTarget, Console.Directory {
 	protected abstract void hit(Coord pc, Coord2d mc, ClickData inf);
 	protected void nohit(Coord pc) {}
     }
-
+    public Coord2d pllastcc;
     private class Click extends Hittest {
 	int clickb;
 	
@@ -2207,7 +2213,22 @@ public class MapView extends PView implements DTarget, Console.Directory {
 	
 	protected void hit(Coord pc, Coord2d mc, ClickData inf) {
 	    Object[] args = {pc, mc.floor(posres), clickb, ui.modflags()};
-	    
+	    int modflags = ui.modflags();
+	    if (ui.gui != null && ui.gui.vhand != null && clickb == 1)
+		modflags = modflags & ~4;
+	    if (clickb == 1){
+		pllastcc = mc;
+	    }
+	    if (clickb == 3) {
+		if (inf != null) {
+		    args = Utils.extend(args, inf.clickargs());
+		    Long gobid = new Long((Integer) inf.clickargs()[1]);
+		    Gob gob = glob.oc.getgob(gobid);
+		    if (gob != null) {
+			pllastcc = gob.rc;
+		    }
+		}
+	    }
 	    if(inf != null) {
 		args = Utils.extend(args, inf.clickargs());
 		Gob gob = Gob.from(inf.ci);

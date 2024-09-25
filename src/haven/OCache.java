@@ -34,6 +34,7 @@ import java.lang.reflect.*;
 import haven.render.Render;
 import java.util.stream.Stream;
 import haven.render.*;
+import haven.sprites.InfoAttr;
 
 public class OCache implements Iterable<Gob> {
     public static final int OD_REM = 0;
@@ -374,6 +375,7 @@ public class OCache implements Iterable<Gob> {
 		if(ol == null) {
 		    nol = new Gob.Overlay(g, olid, new OlSprite(res, sdt));
 		    nol.old = msg.old;
+		    //g.setattr(new InfoAttr(g, res));
 		    g.addol(nol, false);
 		} else {
 		    OlSprite os = (ol.sm instanceof OlSprite) ? (OlSprite)ol.sm : null;
@@ -385,6 +387,7 @@ public class OCache implements Iterable<Gob> {
 		    } else {
 			nol = new Gob.Overlay(g, olid, new OlSprite(res, sdt));
 			nol.old = msg.old;
+			//g.setattr(new InfoAttr(g, res));
 			g.addol(nol, false);
 			ol.remove(false);
 		    }

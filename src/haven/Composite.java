@@ -52,7 +52,7 @@ public class Composite extends Drawable implements EquipTarget {
     private List<MD> nmod2;
     boolean changed = true;
     private String resId = null;
-    private List<String> poses = new LinkedList<>();
+    public List<String> poses = new LinkedList<>();
     
     public Composite(Gob gob, Indir<Resource> base) {
 	super(gob);

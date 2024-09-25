@@ -10,12 +10,12 @@ import java.util.*;
 public class GrowingPlant implements Sprite.Factory {
     public final int num;
     public final List<? extends List<RenderTree.Node>> var;
-    
+
     public GrowingPlant(int num, List<? extends List<RenderTree.Node>> var) {
 	this.num = num;
 	this.var = var;
     }
-    
+
     public GrowingPlant(Resource res, Object[] args) {
 	this.num = (((Number)args[0]).intValue());
 	ArrayList<ArrayList<RenderTree.Node>> var = new ArrayList<>();
@@ -30,7 +30,7 @@ public class GrowingPlant implements Sprite.Factory {
 	var.trimToSize();
 	this.var = var;
     }
-    
+
     public Sprite create(Sprite.Owner owner, Resource res, Message sdt) {
 	int st = sdt.uint8();
 	if((st >= this.var.size()) || (this.var.get(st).size() < 1))
@@ -38,16 +38,12 @@ public class GrowingPlant implements Sprite.Factory {
 	List<RenderTree.Node> var = this.var.get(st);
 	Random rnd = owner.mkrandoom();
 	CSprite spr = new CSprite(owner, res);
-	if(CFG.SIMPLE_CROPS.get()) {
-	    spr.addpart(0, 0, Pipe.Op.nil, var.get(0));
-	} else {
-	    for (int i = 0; i < num; i++) {
-		RenderTree.Node v = var.get(rnd.nextInt(var.size()));
-		if(num > 1)
-		    spr.addpart((rnd.nextFloat() * 11f) - 5.5f, (rnd.nextFloat() * 11f) - 5.5f, Pipe.Op.nil, v);
-		else
-		    spr.addpart((rnd.nextFloat() * 4.4f) - 2.2f, (rnd.nextFloat() * 4.4f) - 2.2f, Pipe.Op.nil, v);
-	    }
+	for(int i = 0; i < num; i++) {
+	    RenderTree.Node v = var.get(rnd.nextInt(var.size()));
+	    if(num > 1)
+		spr.addpart((rnd.nextFloat() * 11f) - 5.5f, (rnd.nextFloat() * 11f) - 5.5f, Pipe.Op.nil, v);
+	    else
+		spr.addpart((rnd.nextFloat() * 4.4f) - 2.2f, (rnd.nextFloat() * 4.4f) - 2.2f, Pipe.Op.nil, v);
 	}
 	return(spr);
     }

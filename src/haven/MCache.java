@@ -89,7 +89,11 @@ public class MCache implements MapSource {
 	    }
 	}
     }
-
+    public void invalidateAll() {
+	Collection<Grid> copy = new ArrayList<>(grids.values());
+	for (Grid gr : copy)
+	    gr.invalidate();
+    }
     private static class Request {
 	private long lastreq = 0;
 	private int reqs = 0;

@@ -29,6 +29,7 @@ package haven;
 import java.util.*;
 import java.util.function.*;
 import haven.render.*;
+import haven.sprites.InfoAttr;
 
 public class Skeleton {
     public final Map<String, Bone> bones = new HashMap<String, Bone>();

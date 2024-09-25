@@ -28,6 +28,9 @@ package haven;
 
 import haven.render.*;
 import haven.res.gfx.fx.msrad.MSRad;
+import haven.sprites.ChaseVectorSprite;
+import haven.sprites.InfoAttr;
+import haven.sprites.LinePathSprite;
 import integrations.mapv4.MappingClient;
 import me.ender.*;
 import me.ender.gob.KinInfo;
@@ -77,6 +80,8 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
     private long eseq = 0;
     private Overlay marker;
     private MarkerSprite.Id markerId;
+    public Boolean isComposite = false;
+    public Long occupiedGobID = null;
     public static final ChangeCallback CHANGED = new ChangeCallback() {
 	@Override
 	public void added(Gob ob) {
@@ -111,6 +116,7 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 
 	public Overlay(Gob gob, int id, Indir<Resource> res, Message sdt) {
 	    this(gob, id, owner -> Sprite.create(owner, res.get(), sdt));
+	    //gob.setattr(new InfoAttr(gob, res));
 	}
 
 	public Overlay(Gob gob, Sprite spr) {
@@ -128,6 +134,8 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 		if(added && (spr instanceof SetupMod))
 		    gob.setupmods.add((SetupMod)spr);
 	    }
+	    //if (spr != null && spr.res != null)
+		//gob.setattr(new InfoAttr(gob, spr.res.indir()));
 	    if(slots == null)
 		RUtils.multiadd(gob.slots, this);
 	}
@@ -516,6 +524,7 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 	setupmods.add(customScale);
 	info = new GeneralGobInfo(this);
 	setattr(info);
+	
 	updwait(this::drawableUpdated, waiting -> {});
 	GobCombatInfo.check(this);
     }
@@ -569,6 +578,20 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 	    status.update(StatusType.map_marker);
 	}
 	updateState();
+	if (getattr(Moving.class) instanceof Following){
+	    Following following = (Following) getattr(Moving.class);
+	    occupiedGobID = following.tgt;
+	    if (occupiedGobID != null) {
+		Gob OccupiedGob = glob.oc.getgob(occupiedGobID);
+		if (OccupiedGob != null) {
+		    synchronized (OccupiedGob.occupants) {
+			if (!OccupiedGob.occupants.contains(this)) {
+			    OccupiedGob.occupants.add(this);
+			}
+		    }
+		}
+	    }
+	}
     }
 
     public void gtick(Render g) {
@@ -864,7 +887,8 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 	    return (c.cast(attr));
 	}
     }
-
+    private Overlay goblinevector = null;
+    private Overlay gobChaseVector = null;
     private void setattr(Class<? extends GAttrib> ac, GAttrib a) {
 	GAttrib prev;
 	synchronized (attr) {
@@ -905,6 +929,44 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 	    } else if(ac == GobHealth.class) {
 		status.update(StatusType.info);
 	    }
+	    if (a instanceof Moving) {
+		if (gobChaseVector != null) {
+		    gobChaseVector.remove();
+		    gobChaseVector = null;
+		}
+		if (goblinevector != null) {
+		    goblinevector.remove();
+		    goblinevector = null;
+		}
+	    }
+	    if (a instanceof Homing) {
+		Homing homing = (Homing) a;
+		if (gobChaseVector == null && homing != null) {
+		    gobChaseVector = new Overlay(this, new ChaseVectorSprite(this, homing));
+		    addol(gobChaseVector);
+		} else if (gobChaseVector != null && homing != null) {
+		    gobChaseVector.remove();
+		    gobChaseVector = new Overlay(this, new ChaseVectorSprite(this, homing));
+		    addol(gobChaseVector);
+		} else if (gobChaseVector != null) {
+		    gobChaseVector.remove();
+		    gobChaseVector = null;
+		}
+	    }
+	    if (a instanceof LinMove) {
+		LinMove linMove = (LinMove) a;
+		if (goblinevector == null && linMove != null) {
+		    goblinevector = new Overlay(this, new LinePathSprite(this, linMove));
+		    addol(goblinevector);
+		} else if (goblinevector != null && linMove != null) {
+		    goblinevector.remove();
+		    goblinevector = new Overlay(this,new LinePathSprite(this, linMove));
+		    addol(goblinevector);
+		} else if (goblinevector != null) {
+		    goblinevector.remove();
+		    goblinevector = null;
+		}
+	    }
 	}
 	if(ac == Moving.class) {updateMovingInfo(a, prev);}
     }
@@ -927,7 +989,18 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 	}
 	return(null);
     }
-
+    public Set<String> getPoses() {
+	Set<String> poses = new HashSet<>();
+	if (this.isComposite) {
+	    try {
+		if (this.getattr(Drawable.class) != null) {
+		    poses = new HashSet<>(((Composite) this.getattr(Drawable.class)).poses);
+		    
+		}
+	    } catch (Exception ignored) { }
+	}
+	return poses;
+    }
     public static class GobClick extends Clickable {
 	public final Gob gob;
 
@@ -1496,23 +1569,33 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
     public static void gobTagsUpdated(UI ui, long gobId) {updateStatus(ui, gobId, StatusType.tags);}
     
     public static void gobTagsUpdated(Gob gob) {if(gob != null) {gob.tagsUpdated();}}
-    
+    public boolean isPartyMember() {
+	synchronized (glob.party.memb) {
+	    for (Party.Member m : glob.party.memb.values()) {
+		if (m.gobid == id)
+		    return true;
+	    }
+	}
+	return false;
+    }
     private void updateState() {
 	if(updateseq == 0 || !status.updated()) {return;}
 	StatusUpdates status = this.status;
 	this.status = new StatusUpdates();
     
 	if(status.updated(StatusType.drawable, StatusType.kin, StatusType.id, StatusType.pose, StatusType.tags, StatusType.overlay, StatusType.combat)) {
+	    isComposite = true;
 	    updateTags();
 	    status.update(StatusType.tags);
 	}
-    
+ 
 	if(status.updated(StatusType.drawable, StatusType.visibility, StatusType.tags, StatusType.icon)) {
 	    if(updateVisibility()) {
+		isComposite = true;
 		status.update(StatusType.visibility);
 	    }
 	}
-    
+ 
 	if(status.updated(StatusType.drawable) && radius == null) {
 	    Resource res = getres();
 	    if(res != null) {
@@ -1530,7 +1613,7 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 	if(status.updated(StatusType.drawable)) {
 	    customScale.update(this);
 	}
-    
+ 
 	if(status.updated(StatusType.drawable, StatusType.id, StatusType.icon)) {
 	    updateIcon();
 	}

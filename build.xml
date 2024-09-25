@@ -246,5 +246,11 @@
       <arg line="-cp hafen.jar me.ender.ResSourceUpdater"/>
     </exec>
   </target>
+
+  <target name="cp" depends="bin">
+    <java jar="bin/hafen.jar" fork="true">
+      <jvmarg line="find-updates"></jvmarg>
+  </java>
+  </target>
   
 </project>

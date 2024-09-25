@@ -27,6 +27,7 @@
 package haven;
 
 
+import java.awt.*;
 import java.util.HashSet;
 import java.util.LinkedList;
 import haven.render.*;
@@ -48,6 +49,7 @@ public class OptWnd extends WindowX {
     public static final Text.Foundry LBL_FNT = new Text.Foundry(sans, 14);
     public Panel current;
     private WidgetList<KeyBinder.ShortcutWidget> shortcutList;
+    
     
     public void chpanel(Panel p) {
 	if(current != null)
@@ -1079,7 +1081,15 @@ public class OptWnd extends WindowX {
 	panel.pack();
 	title.c.x = (panel.sz.x - title.sz.x) / 2;
     }
-
+    public static CheckBox drawPathVectorCheckBox;
+    public static CheckBox drawChaseVectorsCheckBox;
+    public static CheckBox disableterrainsmooth;
+    public static CheckBox simpleforage;
+    public static final Color msgGreen = new Color(8, 211, 0);
+    public static final Color msgGray = new Color(145, 145, 145);
+    public static final Color msgRed = new Color(197, 0, 0);
+    public static final Color msgYellow = new Color(218, 163, 0);
+    
     private void initDisplayPanel(Panel panel) {
 	int STEP = UI.scale(25);
 	int H_STEP = UI.scale(10);
@@ -1201,7 +1211,68 @@ public class OptWnd extends WindowX {
 	y += STEP;
 	tx = panel.add(new CFGColorBtn(CFG.COLOR_GOB_CRITTERS, true), x + H_STEP, y).sz.x + H_STEP;
 	panel.add(new CFGBox("Critters", CFG.DISPLAY_AURA_CRITTERS), x + tx + H_STEP, y);
-    
+	
+	y += STEP;
+	
+	panel.add(drawPathVectorCheckBox = new CheckBox("Draw Player Path Vector"){
+	    {a = (Utils.getprefb("Draw Path Vector", false));}
+	    public void set(boolean val) {
+		Utils.setprefb("Draw Path Vector", val);
+		a = val;
+		if (ui.sess != null)
+		    ui.sess.glob.map.invalidateAll();
+		if (ui != null && ui.gui != null) {
+		    ui.gui.optionInfoMsg("Player Path Highlighting is now " + (val ? "ENABLED" : "DISABLED") + "!", (val ? msgGreen : msgRed));
+		}
+	    }
+	}, x, y);
+	
+	y += STEP;
+	
+	panel.add(drawChaseVectorsCheckBox = new CheckBox("Draw Player Chase Vector"){
+	    {a = (Utils.getprefb("Draw Chase Vector", false));}
+	    public void set(boolean val) {
+		Utils.setprefb("Draw Chase Vector", val);
+		a = val;
+		if (ui.sess != null)
+		    ui.sess.glob.map.invalidateAll();
+		if (ui != null && ui.gui != null) {
+		    ui.gui.optionInfoMsg("Player Chase Path Highlighting is now " + (val ? "ENABLED" : "DISABLED") + "!", (val ? msgGreen : msgRed));
+		}
+	    }
+	}, x, y);
+	
+	y += STEP;
+	
+	panel.add(disableterrainsmooth = new CheckBox("Disable terrain smoothing") {
+	    {a = (Utils.getprefb("Disable terrain smoothing", false));}
+	    public void set(boolean val) {
+		Utils.setprefb("Disable terrain smoothing", val);
+		a = val;
+		if (ui.sess != null)
+		    ui.sess.glob.map.invalidateAll();
+		if (ui != null && ui.gui != null) {
+		    ui.gui.optionInfoMsg("Terrain smoothing disable is " + (val ? "ENABLED" : "DISABLED") + "!", (val ? msgGreen : msgRed));
+		}
+	    }
+	}, x, y);
+	
+	y += STEP;
+	
+	panel.add(simpleforage = new CheckBox("Simple foragables (req. logout)") {
+	    {a = (Utils.getprefb("Simple foragables", false));}
+	    public void set(boolean val) {
+		Utils.setprefb("Simple foragables", val);
+		a = val;
+		if (ui.sess != null)
+		    ui.sess.glob.map.invalidateAll();
+		if (ui != null && ui.gui != null) {
+		    System.out.println(OptWnd.simpleforage.a);
+		    ui.gui.optionInfoMsg("Simple foragables is " + (val ? "ENABLED" : "DISABLED") + "!", (val ? msgGreen : msgRed));
+		}
+	    }
+	}, x, y);
+	
 	my = Math.max(my, y);
 	
 	panel.add(new PButton(UI.scale(200), "Back", 27, main), new Coord(0, my + UI.scale(35)));

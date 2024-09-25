@@ -111,7 +111,15 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Message
 	public abstract void draw(GOut g);
 	public abstract void use(MenuGrid.Interaction iact);
     }
-
+    private double lastmsgsfx = 0;
+    public void optionInfoMsg(String msg, Color color) {
+	msg(msg, color, color);
+	double now = Utils.rtime();
+	if(now - lastmsgsfx > 0.1) {
+	    ui.sfx(RootWidget.msgsfx);
+	    lastmsgsfx = now;
+	}
+    }
     private static final OwnerContext.ClassResolver<ResBeltSlot> beltctxr = new OwnerContext.ClassResolver<ResBeltSlot>()
 	.add(GameUI.class, slot -> slot.wdg())
 	.add(Glob.class, slot -> slot.wdg().ui.sess.glob)
