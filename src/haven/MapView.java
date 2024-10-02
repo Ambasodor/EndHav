@@ -68,6 +68,8 @@ public class MapView extends PView implements DTarget, Console.Directory {
     private static final Map<String, Class<? extends Camera>> camtypes = new HashMap<String, Class<? extends Camera>>();
     private long mapupdate = 0;
     String ttip = null;
+    public static Boolean SHOWPCLAIM = false;
+    public static Boolean SHOWVCLAIM = false;
 
     private boolean showgrid;
 
@@ -666,7 +668,6 @@ public class MapView extends PView implements DTarget, Console.Directory {
 	    return(new MapView(sz, ui.sess.glob, mc, pgob));
 	}
     }
-    
     public MapView(Coord sz, Glob glob, Coord2d cc, long plgob) {
 	super(sz);
 	this.glob = glob;
@@ -687,6 +688,12 @@ public class MapView extends PView implements DTarget, Console.Directory {
 	disposables.add(CFG.COLOR_TILE_GRID.observe(this::updateGridMat));
 	updateSupportOverlay(null);
 	updateGridMat(null);
+	if (SHOWPCLAIM) {
+	    enol("cplot");
+	}
+	if (SHOWVCLAIM) {
+	    enol("vlg");
+	}
     }
     
     private void updatePlobDrawable(CFG<Boolean> cfg) {

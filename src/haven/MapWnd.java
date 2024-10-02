@@ -160,6 +160,13 @@ public class MapWnd extends WindowX implements Console.Directory {
 	    .rclick(() -> CFG.MMAP_SHOW_PARTY_NAMES_STYLE.set((CFG.MMAP_SHOW_PARTY_NAMES_STYLE.get() + 1) % 3))
 	    .settip("Show party names. Right-click to change name coloring");
 	
+	
+	btn = topbar.add(new ICheckBox("gfx/hud/mmap/claim", "", "-d", "", ""), btn.pos("ur"))
+		.changed(a -> toggleol("cplot", a)).settip("Display personal claims");
+	
+	btn = topbar.add(new ICheckBox("gfx/hud/mmap/vclaim", "", "-d", "", ""), btn.pos("ur"))
+	    .changed(a -> toggleol("vlg", a)).settip("Display village claims");
+	
 	topbar.pack();
 	tool = add(new Toolbox2());;
 	compact(Utils.getprefb("compact-map", false));
